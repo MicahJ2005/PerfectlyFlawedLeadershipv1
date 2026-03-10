@@ -1,67 +1,63 @@
 // ── Perfectly Flawed Leadership — Service Worker ─────────────────────────────
-// Handles offline caching so the app shell loads without internet
+// Caches the app shell so it loads instantly and works offline.
+// Never caches Firebase, Firestore, or Anthropic API calls.
 
-const CACHE_NAME = "pfl-v1";
-const SHELL_ASSETS = [
+const CACHE_NAME  = "pfl-v1";
+const SHELL_FILES = [
   "/",
   "/index.html",
-  "/static/js/main.chunk.js",
-  "/static/js/bundle.js",
   "/manifest.json",
-  "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
 ];
 
-// ── Install: cache the app shell ─────────────────────────────────────────────
+// ── Install: pre-cache the shell ─────────────────────────────────────────────
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("[SW] Caching app shell");
-      return cache.addAll(SHELL_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_FILES))
   );
   self.skipWaiting();
 });
 
-// ── Activate: clean up old caches ─────────────────────────────────────────────
+// ── Activate: remove stale caches ────────────────────────────────────────────
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => {
-            console.log("[SW] Deleting old cache:", key);
-            return caches.delete(key);
-          })
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
       )
     )
   );
   self.clients.claim();
 });
 
-// ── Fetch: network-first for API calls, cache-first for shell ────────────────
+// ── Fetch strategy ────────────────────────────────────────────────────────────
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Always go to network for Anthropic API and Google Sheets — never cache
-  if (
-    url.hostname === "api.anthropic.com" ||
-    url.hostname === "sheets.googleapis.com" ||
-    url.hostname === "accounts.google.com"
-  ) {
+  // ❶ Always bypass cache for live API calls
+  const BYPASS = [
+    "api.anthropic.com",       // AI devotion & advisor
+    "firestore.googleapis.com",// Firestore reads/writes
+    "firebase.googleapis.com", // Firebase auth tokens
+    "identitytoolkit.googleapis.com",
+    "securetoken.googleapis.com",
+    "accounts.google.com",
+  ];
+  if (BYPASS.some((h) => url.hostname.includes(h))) {
     event.respondWith(fetch(request));
     return;
   }
 
-  // Cache-first for Google Fonts
+  // ❷ Cache-first for Google Fonts (rarely change)
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
         return fetch(request).then((res) => {
           const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches.open(CACHE_NAME).then((c) => c.put(request, clone));
           return res;
         });
       })
@@ -69,13 +65,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for navigation (HTML), fallback to cache
+  // ❸ Network-first for HTML navigation — fall back to index.html (SPA)
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
         .then((res) => {
           const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches.open(CACHE_NAME).then((c) => c.put(request, clone));
           return res;
         })
         .catch(() => caches.match("/index.html"))
@@ -83,30 +79,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for static assets (JS, CSS, images)
+  // ❹ Cache-first for static assets (JS bundles, CSS, images)
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
       return fetch(request).then((res) => {
         if (!res || res.status !== 200 || res.type === "opaque") return res;
         const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        caches.open(CACHE_NAME).then((c) => c.put(request, clone));
         return res;
       });
     })
   );
 });
 
-// ── Push notifications (future use) ─────────────────────────────────────────
+// ── Push notifications (optional — wire up later) ─────────────────────────────
 self.addEventListener("push", (event) => {
-  const data = event.data?.json() ?? {};
-  const title = data.title || "Perfectly Flawed Leadership";
+  const data    = event.data?.json() ?? {};
+  const title   = data.title || "Perfectly Flawed Leadership";
   const options = {
-    body: data.body || "You have a new notification",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-96.png",
+    body:    data.body || "You have a new notification",
+    icon:    "/icons/icon-192.png",
+    badge:   "/icons/icon-96.png",
     vibrate: [100, 50, 100],
-    data: { url: data.url || "/" },
+    data:    { url: data.url || "/" },
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
