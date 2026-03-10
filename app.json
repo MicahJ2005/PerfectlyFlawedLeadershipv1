@@ -1,20 +1,22 @@
 {
   "expo": {
-    "name": "PerfectlyFlawed",
+    "name": "Perfectly Flawed Leadership",
     "slug": "PerfectlyFlawed",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/web-app-manifest-192x192.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/web-app-manifest-192x192.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.perfectlyflawedleadership.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.perfectlyflawedleadership.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,7 +25,12 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/web-app-manifest-192x192.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
   }
 }
