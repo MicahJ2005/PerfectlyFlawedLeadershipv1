@@ -21,6 +21,8 @@ import { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
+  initializeAuth,
+  getReactNativePersistence,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -47,6 +49,7 @@ import {
   arrayRemove,
   increment,
 } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ── Firebase Config ───────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -65,6 +68,12 @@ const db              = getFirestore(firebaseApp);
 const googleProvider  = new GoogleAuthProvider();
 googleProvider.addScope("profile");
 googleProvider.addScope("email");
+
+const app = initializeApp(firebaseConfig);
+
+// const auth = initializeAuth(app, {
+//   persistence: getReactNativePersistence(AsyncStorage),
+// });
 
 // ── Firestore Helpers ─────────────────────────────────────────────────────────
 const DB = {
@@ -97,6 +106,7 @@ const DB = {
 
   // ── Saved Devotions ────────────────────────────────────────────────────────
   async saveDevotions(uid, devotion) {
+    console.log("Saving devotion for user", uid, "Devotion title:", devotion.title);
     return addDoc(collection(db, "users", uid, "savedDevotions"), {
       ...devotion,
       savedAt: serverTimestamp(),
@@ -105,6 +115,7 @@ const DB = {
   async getSavedDevotions(uid) {
     const q    = query(collection(db, "users", uid, "savedDevotions"), orderBy("savedAt", "desc"));
     const snap = await getDocs(q);
+    console.log("Fetched saved devotions for user", uid, "Count:", snap.size);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   },
 
@@ -505,22 +516,26 @@ function DevotionScreen({ user }) {
     const t = forceTopic || topic || TOPICS[Math.floor(Math.random() * TOPICS.length)];
     setLoading(true); setDevotion(null); setSaved(false); setError(null);
     try {
-      const res  = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST", headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:`You are a devotional writer for Perfectly Flawed Leadership — a faith-based leadership ministry. Tone: warm, honest, pastoral. Respond ONLY with valid JSON (no markdown, no backticks): {"title":"...","scripture":{"verse":"exact text","reference":"Book Ch:V"},"body":"3-4 paragraphs separated by \\n\\n","reflection":"one penetrating question","prayer":"2-3 sentence closing prayer"}`,
-          messages:[{ role:"user", content:`Write a devotion on the topic: ${t}` }],
-        }),
+      const res = await fetch("http://localhost:3001/api/devotion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: t }),
       });
-      const data = await res.json();
-      const text = data.content?.map(b => b.text || "").join("") || "";
-      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("API Error:", res.status, errorData);
+        throw new Error(`API Error: ${res.status} - ${errorData.error || res.statusText}`);
+      }
+      const parsed = await res.json();
       parsed.topic = t;
       setDevotion(parsed);
       if (forceTopic) setTopic(forceTopic);
-    } catch { setError("Could not generate devotion. Please try again."); }
-    finally  { setLoading(false); }
+    } catch (err) {
+      console.error("Devotion generation error:", err.message);
+      setError(`Could not generate devotion: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveDevotion = async () => {
@@ -636,17 +651,16 @@ function AdvisorScreen({ user }) {
     if (!details.trim()) return;
     setLoading(true); setError(null);
     try {
-      const res  = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST", headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:`You are a seasoned, faith-grounded leadership advisor for Perfectly Flawed Leadership. Respond ONLY with valid JSON (no markdown, no backticks): {"headline":"bold truth 6-10 words","coretruth":"2-3 sentences","scriptures":[{"verse":"exact text","reference":"Book Ch:V","application":"1 sentence"},{"verse":"...","reference":"...","application":"..."},{"verse":"...","reference":"...","application":"..."}],"framework":{"name":"framework name","insight":"2 sentences applying it to this situation"},"actions":["verb-led action 1","action 2","action 3","action 4"],"caution":"one honest warning or blind spot","prayer_focus":"1-sentence prayer prompt"}`,
-          messages:[{ role:"user", content:`Situation: ${situation?.label}\nDetails: ${details}\nLeadership style: ${style || "Not specified"}\nTeam readiness: ${teamLevel || "Not specified"}` }],
-        }),
+      const res  = await fetch("http://localhost:3001/api/leadership", {
+        method:"POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ situation, details, style, teamLevel }),
       });
-      const data = await res.json();
-      const text = data.content?.map(b => b.text || "").join("") || "";
-      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || res.statusText);
+      }
+      const parsed = await res.json();
       parsed.situation  = situation;
       parsed.timestamp  = new Date().toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
       setResult(parsed);
