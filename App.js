@@ -19,7 +19,7 @@
 
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "./src/config/firebase";
+import { auth, DB } from "./src/config/firebase";
 import { CREAM, CHARCOAL, GOLD, LTGREY } from "./src/constants/colors";
 import { HomeIcon, BookIcon, AdvisorIcon, UsersIcon, ProfileIcon } from "./src/components/icons";
 import { LoadingState } from "./src/components/ui";
@@ -32,16 +32,29 @@ import { DevotionScreen } from "./src/screens/DevotionScreen";
 import { AdvisorScreen }  from "./src/screens/AdvisorScreen";
 import { PrayerScreen }   from "./src/screens/PrayerScreen";
 import { ProfileScreen }  from "./src/screens/ProfileScreen";
+import { PaywallScreen }  from "./src/screens/PaywallScreen";
 
 export default function App() {
   const [user,       setUser]       = useState(undefined); // undefined = checking auth
   const [authScreen, setAuthScreen] = useState("login");
   const [tab,        setTab]        = useState(0);
+  const [subscribed, setSubscribed] = useState(false);
   const { installPrompt, isInstalled, triggerInstall } = usePWA();
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, firebaseUser => setUser(firebaseUser));
-    return () => unsub();
+    let unsubUser = null;
+    const unsubAuth = onAuthStateChanged(auth, firebaseUser => {
+      setUser(firebaseUser);
+      if (unsubUser) { unsubUser(); unsubUser = null; }
+      if (firebaseUser) {
+        unsubUser = DB.subscribeToUser(firebaseUser.uid, data => {
+          setSubscribed(data.subscribed === true);
+        });
+      } else {
+        setSubscribed(false);
+      }
+    });
+    return () => { unsubAuth(); if (unsubUser) unsubUser(); };
   }, []);
 
   const handleLogout = async () => { await signOut(auth); setTab(0); };
@@ -87,8 +100,8 @@ export default function App() {
         {user && (
           <>
             {tab === 0 && <HomeScreen     user={user} setTab={setTab} />}
-            {tab === 1 && <DevotionScreen user={user} />}
-            {tab === 2 && <AdvisorScreen  user={user} />}
+            {tab === 1 && (subscribed ? <DevotionScreen user={user} /> : <PaywallScreen user={user} featureName="Daily Devotion" />)}
+            {tab === 2 && (subscribed ? <AdvisorScreen  user={user} /> : <PaywallScreen user={user} featureName="Leadership Advisor" />)}
             {tab === 3 && <PrayerScreen   user={user} />}
             {tab === 4 && <ProfileScreen  user={user} onLogout={handleLogout} />}
           </>

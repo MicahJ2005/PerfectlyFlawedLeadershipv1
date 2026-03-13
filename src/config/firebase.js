@@ -11,6 +11,7 @@ import {
   addDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   query,
   orderBy,
   onSnapshot,
@@ -42,11 +43,14 @@ export const DB = {
   async saveUser(uid, data) {
     await setDoc(doc(db, "users", uid), { ...data, updatedAt: serverTimestamp() }, { merge: true });
   },
+  subscribeToUser(uid, callback) {
+    return onSnapshot(doc(db, "users", uid), snap => callback(snap.data() || {}));
+  },
 
   subscribePrayers(callback) {
     const q = query(collection(db, "prayerRequests"), orderBy("createdAt", "desc"));
     return onSnapshot(q, snap =>
-      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.active !== false))
     );
   },
   async addPrayer(data) {
@@ -56,6 +60,9 @@ export const DB = {
       hearts:    0,
       prayedBy:  [],
     });
+  },
+  async deactivatePrayer(prayerId) {
+    await updateDoc(doc(db, "prayerRequests", prayerId), { active: false });
   },
   async togglePrayed(prayerId, uid, hasPrayed) {
     await updateDoc(doc(db, "prayerRequests", prayerId), {

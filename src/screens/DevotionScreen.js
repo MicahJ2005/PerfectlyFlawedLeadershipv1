@@ -17,7 +17,8 @@ export function DevotionScreen({ user }) {
     const t = forceTopic || topic || TOPICS[Math.floor(Math.random() * TOPICS.length)];
     setLoading(true); setDevotion(null); setSaved(false); setError(null);
     try {
-      const res = await fetch("http://localhost:3001/api/devotion", {
+      const API = process.env.NODE_ENV === "development" ? "http://localhost:3001" : "";
+      const res = await fetch(`${API}/api/devotion`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: t }),

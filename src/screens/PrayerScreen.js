@@ -7,11 +7,12 @@ import { HeartIcon } from "../components/icons";
 import { GoldButton } from "../components/ui";
 
 export function PrayerScreen({ user }) {
-  const [prayers,     setPrayers]     = useState([]);
-  const [showForm,    setShowForm]    = useState(false);
-  const [activeGroup, setActiveGroup] = useState("All");
-  const [newPrayer,   setNewPrayer]   = useState({ text:"", group:"General", isAnon:false });
-  const [submitted,   setSubmitted]   = useState(false);
+  const [prayers,        setPrayers]        = useState([]);
+  const [showForm,       setShowForm]       = useState(false);
+  const [activeGroup,    setActiveGroup]    = useState("All");
+  const [newPrayer,      setNewPrayer]      = useState({ text:"", group:"General", isAnon:false });
+  const [submitted,      setSubmitted]      = useState(false);
+  const [confirmDelete,  setConfirmDelete]  = useState(null);
 
   useEffect(() => {
     const unsub = DB.subscribePrayers(setPrayers);
@@ -19,6 +20,11 @@ export function PrayerScreen({ user }) {
   }, []);
 
   const filtered = activeGroup === "All" ? prayers : prayers.filter(p => p.group === activeGroup);
+
+  const deletePrayer = async (prayerId) => {
+    await DB.deactivatePrayer(prayerId);
+    setConfirmDelete(null);
+  };
 
   const toggleHeart = async (prayer) => {
     if (!user) return;
@@ -84,23 +90,36 @@ export function PrayerScreen({ user }) {
           <p style={{ fontFamily:"Georgia,serif", fontSize:14, color:LTGREY, fontStyle:"italic", textAlign:"center", paddingTop:60 }}>No prayer requests yet. Be the first to share.</p>
         )}
         {filtered.map(prayer => {
-          const hasPrayed = (prayer.prayedBy || []).includes(user?.uid);
+          const hasPrayed   = (prayer.prayedBy || []).includes(user?.uid);
+          const isOwner     = user?.uid && prayer.uid === user.uid;
+          const isConfirming = confirmDelete === prayer.id;
           return (
             <div key={prayer.id} style={{ ...css.card, marginBottom:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
                 <div style={{ width:36, height:36, borderRadius:"50%", background:`hsl(${(prayer.author?.charCodeAt(0) || 0) * 47 % 360},30%,75%)`, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Georgia,serif", fontSize:14, fontWeight:700, color:CHARCOAL, flexShrink:0 }}>
                   {prayer.author?.[0] || "?"}
                 </div>
-                <div>
+                <div style={{ flex:1 }}>
                   <p style={{ fontFamily:"Georgia,serif", fontSize:13, fontWeight:600, color:CHARCOAL, margin:0 }}>{prayer.author}</p>
                   <p style={{ fontFamily:"Georgia,serif", fontSize:11, color:LTGREY, margin:0 }}>{prayer.group} · {timeAgo(prayer.createdAt)}</p>
                 </div>
+                {isOwner && !isConfirming && (
+                  <button onClick={() => setConfirmDelete(prayer.id)} style={{ background:"none", border:"none", cursor:"pointer", padding:4, color:LTGREY, fontSize:16, lineHeight:1 }} title="Remove prayer request">✕</button>
+                )}
               </div>
               <p style={{ fontFamily:"Georgia,serif", fontSize:14, color:"#3D3A36", lineHeight:1.7, margin:"0 0 12px" }}>{prayer.text}</p>
-              <button onClick={() => toggleHeart(prayer)} style={{ background: hasPrayed ? "rgba(196,146,42,0.1)" : "transparent", border:`1px solid ${hasPrayed ? GOLD : "rgba(196,146,42,0.25)"}`, borderRadius:20, padding:"6px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                <HeartIcon filled={hasPrayed} size={14}/>
-                <span style={{ fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color:GOLD }}>{hasPrayed ? "Prayed" : "I prayed"} · {prayer.hearts || 0}</span>
-              </button>
+              {isConfirming ? (
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <p style={{ fontFamily:"Georgia,serif", fontSize:12, color:MIDGREY, margin:0, flex:1 }}>Remove this request?</p>
+                  <button onClick={() => deletePrayer(prayer.id)} style={{ background:"#D32F2F", border:"none", borderRadius:14, padding:"5px 12px", fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color:WHITE, cursor:"pointer" }}>Remove</button>
+                  <button onClick={() => setConfirmDelete(null)} style={{ background:"transparent", border:`1px solid ${MIDGREY}`, borderRadius:14, padding:"5px 12px", fontFamily:"Georgia,serif", fontSize:12, color:MIDGREY, cursor:"pointer" }}>Keep</button>
+                </div>
+              ) : (
+                <button onClick={() => toggleHeart(prayer)} style={{ background: hasPrayed ? "rgba(196,146,42,0.1)" : "transparent", border:`1px solid ${hasPrayed ? GOLD : "rgba(196,146,42,0.25)"}`, borderRadius:20, padding:"6px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+                  <HeartIcon filled={hasPrayed} size={14}/>
+                  <span style={{ fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color:GOLD }}>{hasPrayed ? "Prayed" : "I prayed"} · {prayer.hearts || 0}</span>
+                </button>
+              )}
             </div>
           );
         })}

@@ -30,7 +30,8 @@ export function AdvisorScreen({ user }) {
     if (!details.trim()) return;
     setLoading(true); setError(null);
     try {
-      const res  = await fetch("http://localhost:3001/api/leadership", {
+      const API  = process.env.NODE_ENV === "development" ? "http://localhost:3001" : "";
+      const res  = await fetch(`${API}/api/leadership`, {
         method:"POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ situation, details, style, teamLevel }),
