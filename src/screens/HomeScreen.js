@@ -1,15 +1,33 @@
+import { useState, useEffect } from "react";
 import { CHARCOAL, GOLD, LTGREY, MIDGREY, WHITE } from "../constants/colors";
 import { css } from "../constants/styles";
 import { TOPICS } from "../constants/data";
+import { VERSES } from "../constants/verses";
 import { CompassIcon } from "../components/icons";
 import { useTheme } from "../context/ThemeContext";
+import { DB } from "../config/firebase";
 
-export function HomeScreen({ user, setTab }) {
+function pickRandom(arr, n) {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, n);
+}
+
+export function HomeScreen({ user, setTab, onTopicSelect }) {
   const { darkMode } = useTheme();
   const hour      = new Date().getHours();
   const greeting  = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const today     = new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
   const firstName = user?.displayName?.split(" ")[0] || user?.email?.split("@")[0] || "friend";
+  const [verse,         setVerse]         = useState(null);
+  const [visibleTopics, setVisibleTopics] = useState(() => pickRandom(TOPICS, 10));
+
+  useEffect(() => {
+    DB.seedVerses(VERSES)
+      .then(() => DB.getRandomVerse())
+      .then(v => setVerse(v))
+      .catch(() => setVerse(VERSES[Math.floor(Math.random() * VERSES.length)]));
+    setVisibleTopics(pickRandom(TOPICS, 10));
+  }, []);
 
   return (
     <div style={{ padding:"0 20px 100px", overflowY:"auto", height:"100%" }}>
@@ -26,8 +44,8 @@ export function HomeScreen({ user, setTab }) {
       <div style={{ ...css.darkCard, filter: darkMode ? "invert(1) hue-rotate(180deg)" : "none" }}>
         <div style={{ position:"absolute", right:-20, top:-20, opacity:0.06 }}><CompassIcon size={140} color={WHITE}/></div>
         <p style={{ fontFamily:"Georgia,serif", fontSize:11, fontWeight:600, color:GOLD, letterSpacing:"0.14em", textTransform:"uppercase", margin:"0 0 12px" }}>✦  Verse of the Day</p>
-        <p style={{ fontFamily:"Georgia,serif", fontSize:15, fontStyle:"italic", color:"rgba(253,250,245,0.9)", margin:"0 0 12px", lineHeight:1.7 }}>"My grace is sufficient for you, for my power is made perfect in weakness."</p>
-        <p style={{ fontFamily:"Georgia,serif", fontSize:12, color:GOLD, margin:0, fontWeight:600 }}>— 2 Corinthians 12:9</p>
+        <p style={{ fontFamily:"Georgia,serif", fontSize:15, fontStyle:"italic", color:"rgba(253,250,245,0.9)", margin:"0 0 12px", lineHeight:1.7 }}>"{verse ? verse.text : "…"}"</p>
+        <p style={{ fontFamily:"Georgia,serif", fontSize:12, color:GOLD, margin:0, fontWeight:600 }}>— {verse ? verse.ref : ""}</p>
       </div>
 
       {/* Quick actions */}
@@ -50,8 +68,8 @@ export function HomeScreen({ user, setTab }) {
       <div style={css.card}>
         <label style={css.label}>Topics to Explore</label>
         <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-          {TOPICS.map(t => (
-            <button key={t} onClick={() => setTab(1)} style={{ border:"1.5px solid rgba(196,146,42,0.3)", borderRadius:20, padding:"6px 13px", fontFamily:"Georgia,serif", fontSize:12, color:MIDGREY, background:"transparent", cursor:"pointer" }}>{t}</button>
+          {visibleTopics.map(t => (
+            <button key={t} onClick={() => onTopicSelect(t)} style={{ border:"1.5px solid rgba(196,146,42,0.3)", borderRadius:20, padding:"6px 13px", fontFamily:"Georgia,serif", fontSize:12, color:MIDGREY, background:"transparent", cursor:"pointer" }}>{t}</button>
           ))}
         </div>
       </div>

@@ -37,10 +37,11 @@ import { PaywallScreen }  from "./src/screens/PaywallScreen";
 
 function AppContent() {
   const { darkMode } = useTheme();
-  const [user,       setUser]       = useState(undefined); // undefined = checking auth
-  const [authScreen, setAuthScreen] = useState("login");
-  const [tab,        setTab]        = useState(0);
-  const [subscribed, setSubscribed] = useState(false);
+  const [user,         setUser]         = useState(undefined); // undefined = checking auth
+  const [authScreen,   setAuthScreen]   = useState("login");
+  const [tab,          setTab]          = useState(0);
+  const [subscribed,   setSubscribed]   = useState(false);
+  const [pendingTopic, setPendingTopic] = useState(null);
   const { installPrompt, isInstalled, triggerInstall } = usePWA();
 
   useEffect(() => {
@@ -101,8 +102,8 @@ function AppContent() {
         {/* App screens */}
         {user && (
           <>
-            {tab === 0 && <HomeScreen     user={user} setTab={setTab} />}
-            {tab === 1 && (subscribed ? <DevotionScreen user={user} /> : <PaywallScreen user={user} featureName="Daily Devotion" />)}
+            {tab === 0 && <HomeScreen     user={user} setTab={setTab} onTopicSelect={t => { setPendingTopic(t); setTab(1); }} />}
+            {tab === 1 && (subscribed ? <DevotionScreen user={user} pendingTopic={pendingTopic} onTopicConsumed={() => setPendingTopic(null)} /> : <PaywallScreen user={user} featureName="Daily Devotion" />)}
             {tab === 2 && (subscribed ? <AdvisorScreen  user={user} /> : <PaywallScreen user={user} featureName="Leadership Advisor" />)}
             {tab === 3 && <PrayerScreen   user={user} />}
             {tab === 4 && <ProfileScreen  user={user} onLogout={handleLogout} />}

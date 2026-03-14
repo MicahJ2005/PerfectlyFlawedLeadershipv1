@@ -105,4 +105,77 @@ export const DB = {
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   },
+
+  // Verse of the Day
+  async getRandomVerse() {
+    const snap = await getDocs(collection(db, "verses"));
+    if (snap.empty) return null;
+    const docs = snap.docs;
+    return docs[Math.floor(Math.random() * docs.length)].data();
+  },
+  async seedVerses(verses) {
+    const snap = await getDocs(collection(db, "verses"));
+    if (!snap.empty) return; // already seeded
+    await Promise.all(verses.map(v => addDoc(collection(db, "verses"), v)));
+  },
+
+  // Private Prayer Groups
+  async createPrivateGroup(uid, name, displayName) {
+    const code = Array.from({ length: 6 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+    const ref  = await addDoc(collection(db, "privateGroups"), {
+      name,
+      code,
+      createdBy:   uid,
+      members:     [uid],
+      memberNames: { [uid]: displayName || "Member" },
+      createdAt:   serverTimestamp(),
+    });
+    return { id: ref.id, code };
+  },
+  async joinPrivateGroupByCode(uid, code, displayName) {
+    const q    = query(collection(db, "privateGroups"), where("code", "==", code.toUpperCase().trim()));
+    const snap = await getDocs(q);
+    if (snap.empty) throw new Error("No group found with that code.");
+    const groupDoc = snap.docs[0];
+    if ((groupDoc.data().members || []).includes(uid)) throw new Error("You're already in this group.");
+    await updateDoc(doc(db, "privateGroups", groupDoc.id), {
+      members:                     arrayUnion(uid),
+      [`memberNames.${uid}`]:      displayName || "Member",
+    });
+    return { id: groupDoc.id, name: groupDoc.data().name };
+  },
+  async leavePrivateGroup(uid, groupId) {
+    const { deleteField } = await import("firebase/firestore");
+    await updateDoc(doc(db, "privateGroups", groupId), {
+      members:                arrayRemove(uid),
+      [`memberNames.${uid}`]: deleteField(),
+    });
+  },
+  subscribeToUserPrivateGroups(uid, callback) {
+    const q = query(collection(db, "privateGroups"), where("members", "array-contains", uid));
+    return onSnapshot(q, snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  },
+  subscribeToPrivateGroupPrayers(groupId, callback) {
+    const q = query(collection(db, "privateGroups", groupId, "prayers"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, snap =>
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.active !== false))
+    );
+  },
+  async addPrivateGroupPrayer(groupId, data) {
+    return addDoc(collection(db, "privateGroups", groupId, "prayers"), {
+      ...data,
+      createdAt: serverTimestamp(),
+      hearts:    0,
+      prayedBy:  [],
+    });
+  },
+  async togglePrivateGroupPrayed(groupId, prayerId, uid, hasPrayed) {
+    await updateDoc(doc(db, "privateGroups", groupId, "prayers", prayerId), {
+      prayedBy: hasPrayed ? arrayRemove(uid) : arrayUnion(uid),
+      hearts:   increment(hasPrayed ? -1 : 1),
+    });
+  },
+  async deactivatePrivateGroupPrayer(groupId, prayerId) {
+    await updateDoc(doc(db, "privateGroups", groupId, "prayers", prayerId), { active: false });
+  },
 };

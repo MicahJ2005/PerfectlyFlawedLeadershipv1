@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DB } from "../config/firebase";
 import { CHARCOAL, GOLD, WHITE } from "../constants/colors";
 import { css } from "../constants/styles";
@@ -6,12 +6,19 @@ import { TOPICS } from "../constants/data";
 import { CompassIcon, CrossIcon } from "../components/icons";
 import { GoldButton, LoadingState, Divider } from "../components/ui";
 
-export function DevotionScreen({ user }) {
+export function DevotionScreen({ user, pendingTopic, onTopicConsumed }) {
   const [topic,   setTopic]   = useState("");
   const [devotion,setDevotion]= useState(null);
   const [loading, setLoading] = useState(false);
   const [saved,   setSaved]   = useState(false);
   const [error,   setError]   = useState(null);
+
+  useEffect(() => {
+    if (pendingTopic) {
+      setTopic(pendingTopic);
+      onTopicConsumed?.();
+    }
+  }, [pendingTopic]);
 
   const generate = async (forceTopic) => {
     const t = forceTopic || topic || TOPICS[Math.floor(Math.random() * TOPICS.length)];

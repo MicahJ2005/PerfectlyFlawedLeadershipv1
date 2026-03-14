@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { DB } from "../config/firebase";
 import { CHARCOAL, GOLD, LTGREY, MIDGREY, RUST, WHITE } from "../constants/colors";
 import { useTheme } from "../context/ThemeContext";
-import { PrayerGroupsScreen }  from "./PrayerGroupsScreen";
-import { SavedDevotionsScreen } from "./SavedDevotionsScreen";
-import { AppSettingsScreen }    from "./AppSettingsScreen";
+import { PrayerGroupsScreen }        from "./PrayerGroupsScreen";
+import { SavedDevotionsScreen }       from "./SavedDevotionsScreen";
+import { AppSettingsScreen }          from "./AppSettingsScreen";
+import { PrivatePrayerGroupsScreen }  from "./PrivatePrayerGroupsScreen";
 
 export function ProfileScreen({ user, onLogout }) {
   const { darkMode } = useTheme();
@@ -41,18 +42,20 @@ export function ProfileScreen({ user, onLogout }) {
   };
 
   // Sub-screen navigation
-  if (subScreen === "groups")    return <PrayerGroupsScreen  user={user} onBack={() => setSubScreen(null)} />;
-  if (subScreen === "devotions") return <SavedDevotionsScreen user={user} onBack={() => setSubScreen(null)} />;
-  if (subScreen === "settings")  return <AppSettingsScreen          onBack={() => setSubScreen(null)} />;
+  if (subScreen === "groups")         return <PrayerGroupsScreen        user={user} onBack={() => setSubScreen(null)} />;
+  if (subScreen === "privateGroups")  return <PrivatePrayerGroupsScreen  user={user} onBack={() => setSubScreen(null)} />;
+  if (subScreen === "devotions")      return <SavedDevotionsScreen       user={user} onBack={() => setSubScreen(null)} />;
+  if (subScreen === "settings")       return <AppSettingsScreen                onBack={() => setSubScreen(null)} />;
 
   const isGoogle = user?.providerData?.[0]?.providerId === "google.com";
   const initial  = (user?.displayName || user?.email || "?")[0].toUpperCase();
 
   const rows = [
-    { icon:"🔔", title:"Notifications",    sub:"Daily devotion reminders",    onPress: null                          },
-    { icon:"🙏", title:"My Prayer Groups", sub:"Manage group memberships",     onPress: () => setSubScreen("groups")   },
-    { icon:"📖", title:"Saved Devotions",  sub:"View your saved library",      onPress: () => setSubScreen("devotions")},
-    { icon:"⚙️", title:"App Settings",     sub:"Theme, font size, language",   onPress: () => setSubScreen("settings") },
+    { icon:"🔔", title:"Notifications",       sub:"Daily devotion reminders",       onPress: null                                  },
+    { icon:"🙏", title:"My Prayer Groups",   sub:"Manage group memberships",        onPress: () => setSubScreen("groups")          },
+    { icon:"🔒", title:"Private Groups",     sub:"Create or join with a code",      onPress: () => setSubScreen("privateGroups")   },
+    { icon:"📖", title:"Saved Devotions",    sub:"View your saved library",         onPress: () => setSubScreen("devotions")       },
+    { icon:"⚙️", title:"App Settings & Help", sub:"Theme, font size, language",    onPress: () => setSubScreen("settings")        },
   ];
 
   return (
@@ -84,8 +87,8 @@ export function ProfileScreen({ user, onLogout }) {
 
       {/* Firebase status */}
       <div style={{ background:"rgba(232,248,232,0.8)", borderRadius:14, padding:"14px 18px", marginBottom:18, border:"1px solid rgba(130,190,130,0.4)" }}>
-        <p style={{ fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color:"#2A6A2A", margin:"0 0 3px", letterSpacing:"0.08em", textTransform:"uppercase" }}>✓ Firebase Connected</p>
-        <p style={{ fontFamily:"Georgia,serif", fontSize:12, color:"#4A8A4A", margin:0, lineHeight:1.6 }}>Your prayers, devotions, and leadership sessions are syncing securely to Firestore in real time.</p>
+        <p style={{ fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color:"#2A6A2A", margin:"0 0 3px", letterSpacing:"0.08em", textTransform:"uppercase" }}>✓ Secure Connection</p>
+        <p style={{ fontFamily:"Georgia,serif", fontSize:12, color:"#4A8A4A", margin:0, lineHeight:1.6 }}>Your prayers, devotions, and leadership sessions are saved securely in real time.</p>
       </div>
 
       {/* Subscription */}

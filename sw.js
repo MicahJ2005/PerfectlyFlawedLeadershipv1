@@ -2,7 +2,7 @@
 // Caches the app shell so it loads instantly and works offline.
 // Never caches Firebase, Firestore, or Anthropic API calls.
 
-const CACHE_NAME  = "pfl-v1";
+const CACHE_NAME  = "pfl-v2";
 const SHELL_FILES = [
   "/",
   "/index.html",
