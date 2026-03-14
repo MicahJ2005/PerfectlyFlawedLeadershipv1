@@ -13,11 +13,16 @@ export function PrayerScreen({ user }) {
   const [newPrayer,      setNewPrayer]      = useState({ text:"", group:"General", isAnon:false });
   const [submitted,      setSubmitted]      = useState(false);
   const [confirmDelete,  setConfirmDelete]  = useState(null);
+  const [userGroups,     setUserGroups]     = useState([]);
 
   useEffect(() => {
-    const unsub = DB.subscribePrayers(setPrayers);
-    return () => unsub();
-  }, []);
+    const unsubPrayers = DB.subscribePrayers(setPrayers);
+    const unsubUser    = user ? DB.subscribeToUser(user.uid, data => setUserGroups(data.groups || [])) : null;
+    return () => { unsubPrayers(); if (unsubUser) unsubUser(); };
+  }, [user]);
+
+  // Show only the user's joined groups in the filter tabs; fall back to all groups if none selected
+  const visibleGroups = userGroups.length > 0 ? userGroups : GROUPS;
 
   const filtered = activeGroup === "All" ? prayers : prayers.filter(p => p.group === activeGroup);
 
@@ -78,7 +83,7 @@ export function PrayerScreen({ user }) {
 
         {/* Group filter */}
         <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:12, scrollbarWidth:"none" }}>
-          {["All", ...GROUPS].map(g => (
+          {["All", ...visibleGroups].map(g => (
             <button key={g} onClick={() => setActiveGroup(g)} style={{ flexShrink:0, border:`1.5px solid ${activeGroup===g ? GOLD : "rgba(196,146,42,0.25)"}`, borderRadius:20, padding:"6px 14px", fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color: activeGroup===g ? WHITE : MIDGREY, background: activeGroup===g ? GOLD : "transparent", cursor:"pointer", whiteSpace:"nowrap" }}>{g}</button>
           ))}
         </div>

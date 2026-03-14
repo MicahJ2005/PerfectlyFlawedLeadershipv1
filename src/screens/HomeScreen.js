@@ -2,8 +2,10 @@ import { CHARCOAL, GOLD, LTGREY, MIDGREY, WHITE } from "../constants/colors";
 import { css } from "../constants/styles";
 import { TOPICS } from "../constants/data";
 import { CompassIcon } from "../components/icons";
+import { useTheme } from "../context/ThemeContext";
 
 export function HomeScreen({ user, setTab }) {
+  const { darkMode } = useTheme();
   const hour      = new Date().getHours();
   const greeting  = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const today     = new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
@@ -20,8 +22,8 @@ export function HomeScreen({ user, setTab }) {
         <CompassIcon size={36} />
       </div>
 
-      {/* Verse of the day */}
-      <div style={css.darkCard}>
+      {/* Verse of the day — double-invert to stay dark in dark mode */}
+      <div style={{ ...css.darkCard, filter: darkMode ? "invert(1) hue-rotate(180deg)" : "none" }}>
         <div style={{ position:"absolute", right:-20, top:-20, opacity:0.06 }}><CompassIcon size={140} color={WHITE}/></div>
         <p style={{ fontFamily:"Georgia,serif", fontSize:11, fontWeight:600, color:GOLD, letterSpacing:"0.14em", textTransform:"uppercase", margin:"0 0 12px" }}>✦  Verse of the Day</p>
         <p style={{ fontFamily:"Georgia,serif", fontSize:15, fontStyle:"italic", color:"rgba(253,250,245,0.9)", margin:"0 0 12px", lineHeight:1.7 }}>"My grace is sufficient for you, for my power is made perfect in weakness."</p>
@@ -31,7 +33,7 @@ export function HomeScreen({ user, setTab }) {
       {/* Quick actions */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
         {[
-          { label:"Today's Devotion",   sub:"AI-crafted for you",        icon:"📖", tab:1, gold:true  },
+          { label:"Today's Devotion",   sub:"Built for you",             icon:"📖", tab:1, gold:true  },
           { label:"Leadership Advisor", sub:"Scripture-grounded advice", icon:"🧭", tab:2, gold:false },
           { label:"Prayer Wall",        sub:"Community requests",        icon:"🙏", tab:3, gold:false },
           { label:"Your Profile",       sub:"Stats & saved content",     icon:"✨", tab:4, gold:false },

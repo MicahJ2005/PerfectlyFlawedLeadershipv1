@@ -5,11 +5,11 @@ import { GoldButton } from "../components/ui";
 
 // ─── Replace these with your actual Stripe Price IDs from the Stripe Dashboard ───
 const MONTHLY_PRICE_ID = "prod_U8c6sT1TH5kRfM";  // e.g. $9.99/month
-const ANNUAL_PRICE_ID  = "prod_U8c7eD5wkzNBbJ";   // e.g. $79.99/year
+const ANNUAL_PRICE_ID  = "prod_U8rA4P8AaYRBZq";   // e.g. $69.99/year
 // ─────────────────────────────────────────────────────────────────────────────────
 
 const MONTHLY_LABEL = "$9.99 / month";
-const ANNUAL_LABEL  = "$89.99 / year";
+const ANNUAL_LABEL  = "$69.99 / year";
 const ANNUAL_SAVINGS = "Save 25%";
 
 export function PaywallScreen({ user, featureName }) {

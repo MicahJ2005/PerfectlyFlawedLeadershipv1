@@ -25,6 +25,7 @@ import { HomeIcon, BookIcon, AdvisorIcon, UsersIcon, ProfileIcon } from "./src/c
 import { LoadingState } from "./src/components/ui";
 import { InstallBanner } from "./src/components/InstallBanner";
 import { usePWA } from "./src/hooks/usePWA";
+import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { LoginScreen }    from "./src/screens/LoginScreen";
 import { SignupScreen }   from "./src/screens/SignupScreen";
 import { HomeScreen }     from "./src/screens/HomeScreen";
@@ -34,7 +35,8 @@ import { PrayerScreen }   from "./src/screens/PrayerScreen";
 import { ProfileScreen }  from "./src/screens/ProfileScreen";
 import { PaywallScreen }  from "./src/screens/PaywallScreen";
 
-export default function App() {
+function AppContent() {
+  const { darkMode } = useTheme();
   const [user,       setUser]       = useState(undefined); // undefined = checking auth
   const [authScreen, setAuthScreen] = useState("login");
   const [tab,        setTab]        = useState(0);
@@ -68,16 +70,16 @@ export default function App() {
   ];
 
   return (
-    <div style={{ width:"100%", maxWidth:390, margin:"0 auto", height:"100dvh", background:CREAM, position:"relative", overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 0 60px rgba(45,43,40,0.25)" }}>
+    <div style={{ width:"100%", maxWidth:390, margin:"0 auto", height:"100dvh", background:CREAM, position:"relative", overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 0 60px rgba(45,43,40,0.25)", filter: darkMode ? "invert(1) hue-rotate(180deg)" : "none" }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
 
       {/* Status bar */}
-      <div style={{ height:44, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", flexShrink:0 }}>
+      {/* <div style={{ height:44, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", flexShrink:0 }}>
         <span style={{ fontFamily:"system-ui", fontSize:14, fontWeight:600, color:CHARCOAL }}>{new Date().toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" })}</span>
         <div style={{ width:16, height:10, border:`1.5px solid ${CHARCOAL}`, borderRadius:2, position:"relative" }}>
           <div style={{ position:"absolute", left:1, top:1, bottom:1, right:3, background:CHARCOAL, borderRadius:1 }}/>
         </div>
-      </div>
+      </div> */}
 
       {/* Content area */}
       <div style={{ flex:1, overflow:"hidden", position:"relative" }}>
@@ -127,4 +129,8 @@ export default function App() {
       )}
     </div>
   );
+}
+
+export default function App() {
+  return <ThemeProvider><AppContent /></ThemeProvider>;
 }

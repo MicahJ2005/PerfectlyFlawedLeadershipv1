@@ -4,7 +4,7 @@ export const TOPICS = [
   "Forgiveness and freedom","Faith over fear","Leading with integrity","Rest and renewal",
 ];
 
-export const GROUPS = ["Morning Warriors","Women's Circle","Leadership Team","General","Men's Brotherhood"];
+export const GROUPS = ["Morning Warriors","Women's Circle","Leadership Team","General","Men's Brotherhood","Family Roots","Evening Embers","Community Table"];
 
 export const SITUATIONS = [
   { icon:"⚔️", label:"Team Conflict",          desc:"Navigating tension between people" },

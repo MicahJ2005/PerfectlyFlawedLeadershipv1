@@ -28,7 +28,7 @@ export function InstallBanner({ installPrompt, triggerInstall }) {
         </div>
         <div>
           <p style={{ fontFamily:"Georgia,serif", fontSize:14, fontWeight:700, color:WHITE, margin:0 }}>Add to Home Screen</p>
-          <p style={{ fontFamily:"Georgia,serif", fontSize:11, color:"rgba(253,250,245,0.55)", margin:0 }}>Use PFL like a real app — works offline too</p>
+          <p style={{ fontFamily:"Georgia,serif", fontSize:11, color:"rgba(253,250,245,0.55)", margin:0 }}>Use Perfectly Flawed Leadership like a real app — works offline too</p>
         </div>
       </div>
       {isIos ? (

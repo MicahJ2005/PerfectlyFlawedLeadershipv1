@@ -13,6 +13,7 @@ import {
   updateDoc,
   deleteDoc,
   query,
+  where,
   orderBy,
   onSnapshot,
   serverTimestamp,
@@ -64,6 +65,11 @@ export const DB = {
   async deactivatePrayer(prayerId) {
     await updateDoc(doc(db, "prayerRequests", prayerId), { active: false });
   },
+  async getPrayedCount(uid) {
+    const q    = query(collection(db, "prayerRequests"), where("prayedBy", "array-contains", uid));
+    const snap = await getDocs(q);
+    return snap.size;
+  },
   async togglePrayed(prayerId, uid, hasPrayed) {
     await updateDoc(doc(db, "prayerRequests", prayerId), {
       prayedBy: hasPrayed ? arrayRemove(uid) : arrayUnion(uid),
@@ -77,6 +83,9 @@ export const DB = {
       ...devotion,
       savedAt: serverTimestamp(),
     });
+  },
+  async deleteSavedDevotion(uid, devotionId) {
+    await deleteDoc(doc(db, "users", uid, "savedDevotions", devotionId));
   },
   async getSavedDevotions(uid) {
     const q    = query(collection(db, "users", uid, "savedDevotions"), orderBy("savedAt", "desc"));

@@ -95,6 +95,30 @@ app.post("/api/create-checkout-session", express.json(), async (req, res) => {
   }
 });
 
+// ── Stripe Customer Portal ────────────────────────────────────────────────────
+app.post("/api/create-portal-session", express.json(), async (req, res) => {
+  const Stripe = require("stripe");
+  const stripe = Stripe(stripeSecretKey.value());
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: "uid required" });
+
+  const db   = admin.firestore();
+  const snap = await db.collection("users").doc(uid).get();
+  const customerId = snap.data()?.stripeCustomerId;
+  if (!customerId) return res.status(404).json({ error: "No billing account found" });
+
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer:   customerId,
+      return_url: "https://devo4me.web.app",
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("Portal error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Promo Code Redemption ─────────────────────────────────────────────────────
 app.post("/api/redeem-code", express.json(), async (req, res) => {
   const { code, uid } = req.body;
