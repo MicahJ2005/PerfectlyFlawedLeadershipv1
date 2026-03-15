@@ -9,6 +9,19 @@ function formatDate(ts) {
   return ts.toDate().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" });
 }
 
+export function shareDevotion(devotion) {
+  const subject = encodeURIComponent(`Devotion: ${devotion.title}`);
+  const body = encodeURIComponent(
+    `${devotion.title}\n\n` +
+    `"${devotion.scripture?.verse}"\n— ${devotion.scripture?.reference}\n\n` +
+    `${devotion.body}\n\n` +
+    `Reflect:\n${devotion.reflection}\n\n` +
+    `Closing Prayer:\n${devotion.prayer}\n\n` +
+    `— Shared from Perfectly Flawed Leadership\nhttps://perfectlyflawedleadership.com\nhttps://devo4me.web.app`
+  );
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
 export function DevotionDetail({ devotion, onBack }) {
   return (
     <div style={{ height:"100%", overflowY:"auto", padding:"0 20px 100px" }}>
@@ -49,6 +62,10 @@ export function DevotionDetail({ devotion, onBack }) {
               <p style={{ fontFamily:"Georgia,serif", fontSize:11, fontWeight:600, color:GOLD, letterSpacing:"0.12em", textTransform:"uppercase", margin:0 }}>Closing Prayer</p>
             </div>
             <p style={{ fontFamily:"Georgia,serif", fontSize:14, fontStyle:"italic", color:"#3D3A36", margin:0, lineHeight:1.7 }}>{devotion.prayer}</p>
+          </div>
+
+          <div style={{ display:"flex", gap:10, marginTop:18 }}>
+            <button onClick={() => shareDevotion(devotion)} style={{ flex:1, border:"1.5px solid rgba(45,43,40,0.2)", borderRadius:10, padding:12, fontFamily:"Georgia,serif", fontSize:13, fontWeight:600, color:CHARCOAL, background:"transparent", cursor:"pointer" }}>Share</button>
           </div>
 
           <p style={{ fontFamily:"Georgia,serif", fontSize:11, color:LTGREY, margin:"16px 0 0", textAlign:"right" }}>

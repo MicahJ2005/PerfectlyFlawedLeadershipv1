@@ -168,7 +168,22 @@ export function ProfileScreen({ user, onLogout, setTab }) {
         </div>
       ))}
 
-      <button onClick={onLogout} style={{ width:"100%", marginTop:16, background:"transparent", border:"1.5px solid rgba(220,80,80,0.3)", borderRadius:13, padding:14, fontFamily:"Georgia,serif", fontSize:14, fontWeight:600, color:RUST, cursor:"pointer" }}>
+      <button onClick={() => {
+        const subject = encodeURIComponent("You should check out Perfectly Flawed Leadership");
+        const body = encodeURIComponent(
+          "Hey,\n\nI've been using the Perfectly Flawed Leadership app and thought you might find it meaningful too.\n\n" +
+          "It's a faith-based leadership tool with daily devotions, a prayer wall, and an leadership advisor — all grounded in Scripture.\n\n" +
+          "Check it out:\n" +
+          "App: https://devo4me.web.app\n" +
+          "Website: https://perfectlyflawedleadership.com\n\n" +
+          "Hope it encourages you!"
+        );
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      }} style={{ width:"100%", marginTop:10, background:"rgba(196,146,42,0.08)", border:"1.5px solid rgba(196,146,42,0.3)", borderRadius:13, padding:14, fontFamily:"Georgia,serif", fontSize:14, fontWeight:600, color:GOLD, cursor:"pointer" }}>
+        Invite a Friend
+      </button>
+
+      <button onClick={onLogout} style={{ width:"100%", marginTop:10, background:"transparent", border:"1.5px solid rgba(220,80,80,0.3)", borderRadius:13, padding:14, fontFamily:"Georgia,serif", fontSize:14, fontWeight:600, color:RUST, cursor:"pointer" }}>
         Sign Out
       </button>
     </div>

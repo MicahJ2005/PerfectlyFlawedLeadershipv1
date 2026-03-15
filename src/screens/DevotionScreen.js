@@ -5,7 +5,7 @@ import { css } from "../constants/styles";
 import { TOPICS } from "../constants/data";
 import { CompassIcon, CrossIcon } from "../components/icons";
 import { GoldButton, LoadingState, Divider } from "../components/ui";
-import { SavedDevotionsScreen, DevotionDetail } from "./SavedDevotionsScreen";
+import { SavedDevotionsScreen, DevotionDetail, shareDevotion } from "./SavedDevotionsScreen";
 
 export function DevotionScreen({ user, pendingTopic, onTopicConsumed }) {
   const [topic,          setTopic]          = useState("");
@@ -164,9 +164,9 @@ export function DevotionScreen({ user, pendingTopic, onTopicConsumed }) {
             {/* Actions */}
             <div style={{ display:"flex", gap:10, marginTop:18 }}>
               <button onClick={saveDevotion} style={{ flex:1, border:`1.5px solid ${saved ? GOLD : "rgba(196,146,42,0.3)"}`, borderRadius:10, padding:12, fontFamily:"Georgia,serif", fontSize:13, fontWeight:600, color: saved ? WHITE : GOLD, background: saved ? GOLD : "transparent", cursor:"pointer" }}>
-                {saved ? "✓ Saved to Firebase" : "Save"}
+                {saved ? "✓ Saved" : "Save"}
               </button>
-              <button style={{ flex:1, border:"1.5px solid rgba(45,43,40,0.2)", borderRadius:10, padding:12, fontFamily:"Georgia,serif", fontSize:13, fontWeight:600, color:CHARCOAL, background:"transparent", cursor:"pointer" }}>Share</button>
+              <button onClick={() => shareDevotion(devotion)} style={{ flex:1, border:"1.5px solid rgba(45,43,40,0.2)", borderRadius:10, padding:12, fontFamily:"Georgia,serif", fontSize:13, fontWeight:600, color:CHARCOAL, background:"transparent", cursor:"pointer" }}>Share</button>
             </div>
           </div>
         </div>
