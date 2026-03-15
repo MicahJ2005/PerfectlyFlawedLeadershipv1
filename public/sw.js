@@ -1,4 +1,4 @@
-const CACHE = "pfl-v2";
+const CACHE = "pfl-v3";
 const PRECACHE = ["/", "/manifest.json"];
 
 self.addEventListener("install", e => {
@@ -26,4 +26,23 @@ self.addEventListener("fetch", e => {
       })
       .catch(() => caches.match(e.request))
   );
+});
+
+// ── Push notifications ────────────────────────────────────────────────────────
+self.addEventListener("push", e => {
+  const data    = e.data?.json() ?? {};
+  const title   = data.title || "Perfectly Flawed Leadership";
+  const options = {
+    body:    data.body || "You have a new notification",
+    icon:    "/icons/icon-192.png",
+    badge:   "/icons/icon-96.png",
+    vibrate: [100, 50, 100],
+    data:    { url: data.url || "/" },
+  };
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(clients.openWindow(e.notification.data.url));
 });

@@ -55,7 +55,7 @@ export function AdvisorScreen({ user }) {
   if (step === "home") return (
     <div style={{ height:"100%", overflowY:"auto", padding:"0 20px 100px" }}>
       <div style={{ padding:"32px 0 20px" }}>
-        <h1 style={{ fontFamily:"Georgia,serif", fontSize:24, fontWeight:700, color:CHARCOAL, margin:"0 0 4px" }}>Leadership Advisor</h1>
+        <h1 style={{ fontFamily:"Georgia,serif", fontSize:24, fontWeight:700, color:CHARCOAL, margin:"0 0 4px" }}>Leader's Compass</h1>
         <p style={{ fontFamily:"Georgia,serif", fontSize:12, color:MIDGREY, margin:0 }}>Scripture-grounded situational guidance</p>
       </div>
 

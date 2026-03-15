@@ -1,4 +1,4 @@
-import { GOLD, MIDGREY, WHITE } from "../../constants/colors";
+import { GOLD, MIDGREY } from "../../constants/colors";
 
 export const CompassIcon = ({ size=24, color=GOLD }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
@@ -35,7 +35,19 @@ export const EyeIcon = ({ show }) => (
 
 export const HomeIcon    = ({ a }) => <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={a?GOLD:MIDGREY} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>;
 export const BookIcon    = ({ a }) => <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={a?GOLD:MIDGREY} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
-export const AdvisorIcon = ({ a }) => <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={a?GOLD:MIDGREY} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M12 6a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3.5 5.5V20h-5v-2.5C7.5 16.5 6 14.5 6 12a6 6 0 0 1 6-6z"/><line x1="9.5" y1="20" x2="14.5" y2="20"/><line x1="10" y1="23" x2="14" y2="23"/></svg>;
+export const AdvisorIcon = ({ a }) => {
+  const c = a ? GOLD : MIDGREY;
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <circle cx="12" cy="12" r="7"/>
+      <polygon points="12,4 13.5,11 12,10 10.5,11" fill={c} stroke="none"/>
+      <polygon points="12,20 10.5,13 12,14 13.5,13" fill={a ? MIDGREY : "rgba(122,118,114,0.4)"} stroke="none"/>
+      <polygon points="20,12 13,10.5 14,12 13,13.5" fill={a ? MIDGREY : "rgba(122,118,114,0.4)"} stroke="none"/>
+      <polygon points="4,12 11,13.5 10,12 11,10.5"  fill={a ? MIDGREY : "rgba(122,118,114,0.4)"} stroke="none"/>
+    </svg>
+  );
+};
 export const UsersIcon   = ({ a }) => <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={a?GOLD:MIDGREY} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 export const ProfileIcon = ({ a }) => <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={a?GOLD:MIDGREY} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 

@@ -65,7 +65,7 @@ function AppContent() {
   const tabs = [
     { label:"Home",     Icon:HomeIcon     },
     { label:"Devotion", Icon:BookIcon     },
-    { label:"Advisor",  Icon:AdvisorIcon  },
+    { label:"Compass",  Icon:AdvisorIcon  },
     { label:"Prayer",   Icon:UsersIcon    },
     { label:"Profile",  Icon:ProfileIcon  },
   ];
@@ -104,9 +104,9 @@ function AppContent() {
           <>
             {tab === 0 && <HomeScreen     user={user} setTab={setTab} onTopicSelect={t => { setPendingTopic(t); setTab(1); }} />}
             {tab === 1 && (subscribed ? <DevotionScreen user={user} pendingTopic={pendingTopic} onTopicConsumed={() => setPendingTopic(null)} /> : <PaywallScreen user={user} featureName="Daily Devotion" />)}
-            {tab === 2 && (subscribed ? <AdvisorScreen  user={user} /> : <PaywallScreen user={user} featureName="Leadership Advisor" />)}
+            {tab === 2 && (subscribed ? <AdvisorScreen  user={user} /> : <PaywallScreen user={user} featureName="Leader's Compass" />)}
             {tab === 3 && <PrayerScreen   user={user} />}
-            {tab === 4 && <ProfileScreen  user={user} onLogout={handleLogout} />}
+            {tab === 4 && <ProfileScreen  user={user} onLogout={handleLogout} setTab={setTab} />}
           </>
         )}
       </div>

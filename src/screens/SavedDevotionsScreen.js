@@ -9,7 +9,7 @@ function formatDate(ts) {
   return ts.toDate().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" });
 }
 
-function DevotionDetail({ devotion, onBack }) {
+export function DevotionDetail({ devotion, onBack }) {
   return (
     <div style={{ height:"100%", overflowY:"auto", padding:"0 20px 100px" }}>
       {/* Header */}

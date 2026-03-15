@@ -45,7 +45,10 @@ export function PrayerScreen({ user }) {
   const selectPrivateTab = (group) => { setActivePrivate(group); setActiveGroup(null); };
 
   const visibleGroups = userGroups.length > 0 ? userGroups : GROUPS;
-  const displayPrayers = activePrivate ? privateGroupPrayers : (activeGroup === "All" ? prayers : prayers.filter(p => p.group === activeGroup));
+  const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
+  const isAnonExpired = (p) => p.isAnon && p.createdAt?.toDate && (Date.now() - p.createdAt.toDate().getTime() > TEN_DAYS_MS);
+  const filterPrayers = (list) => list.filter(p => !isAnonExpired(p));
+  const displayPrayers = filterPrayers(activePrivate ? privateGroupPrayers : (activeGroup === "All" ? prayers : prayers.filter(p => p.group === activeGroup)));
 
   const timeAgo = (ts) => {
     if (!ts?.toDate) return "";
@@ -62,11 +65,10 @@ export function PrayerScreen({ user }) {
     setConfirmDelete(null);
   };
 
-  const toggleHeart = async (prayer) => {
+  const handlePray = async (prayer) => {
     if (!user) return;
-    const hasPrayed = (prayer.prayedBy || []).includes(user.uid);
-    if (activePrivate) await DB.togglePrivateGroupPrayed(activePrivate.id, prayer.id, user.uid, hasPrayed);
-    else               await DB.togglePrayed(prayer.id, user.uid, hasPrayed);
+    if (activePrivate) await DB.prayForPrivateGroup(activePrivate.id, prayer.id, user.uid);
+    else               await DB.prayFor(prayer.id, user.uid);
   };
 
   const submitPrayer = async () => {
@@ -172,9 +174,9 @@ export function PrayerScreen({ user }) {
                   <button onClick={() => setConfirmDelete(null)} style={{ background:"transparent", border:`1px solid ${MIDGREY}`, borderRadius:14, padding:"5px 12px", fontFamily:"Georgia,serif", fontSize:12, color:MIDGREY, cursor:"pointer" }}>Keep</button>
                 </div>
               ) : (
-                <button onClick={() => toggleHeart(prayer)} style={{ background: hasPrayed ? "rgba(196,146,42,0.1)" : "transparent", border:`1px solid ${hasPrayed ? GOLD : "rgba(196,146,42,0.25)"}`, borderRadius:20, padding:"6px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+                <button onClick={() => handlePray(prayer)} style={{ background: hasPrayed ? "rgba(196,146,42,0.1)" : "transparent", border:`1px solid ${hasPrayed ? GOLD : "rgba(196,146,42,0.25)"}`, borderRadius:20, padding:"6px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
                   <HeartIcon filled={hasPrayed} size={14}/>
-                  <span style={{ fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color:GOLD }}>{hasPrayed ? "Prayed" : "I prayed"} · {prayer.hearts || 0}</span>
+                  <span style={{ fontFamily:"Georgia,serif", fontSize:12, fontWeight:600, color:GOLD }}>{hasPrayed ? "Pray again" : "I prayed"} · {prayer.hearts || 0}</span>
                 </button>
               )}
             </div>
@@ -209,7 +211,7 @@ export function PrayerScreen({ user }) {
             )}
             <label style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer", marginBottom:20 }}>
               <input type="checkbox" checked={newPrayer.isAnon} onChange={e => setNewPrayer(p => ({ ...p, isAnon:e.target.checked }))} style={{ width:18, height:18, accentColor:GOLD }}/>
-              <span style={{ fontFamily:"Georgia,serif", fontSize:13, color:MIDGREY }}>Post anonymously</span>
+              <span style={{ fontFamily:"Georgia,serif", fontSize:13, color:MIDGREY }}>Post anonymously (displayed for 10 days)</span>
             </label>
             <GoldButton onClick={submitPrayer} disabled={!newPrayer.text.trim()}>Submit Prayer Request</GoldButton>
           </div>

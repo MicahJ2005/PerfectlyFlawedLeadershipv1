@@ -38,7 +38,7 @@
       "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
     },
     {
-      "name": "Leadership Advisor",
+      "name": "Leader's Compass",
       "short_name": "Advisor",
       "description": "Get Scripture-grounded leadership advice",
       "url": "/?tab=2",

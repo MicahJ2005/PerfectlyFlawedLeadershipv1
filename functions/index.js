@@ -1,5 +1,6 @@
-const { onRequest }    = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
+const { onRequest }         = require("firebase-functions/v2/https");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { defineSecret }      = require("firebase-functions/params");
 const express          = require("express");
 const cors             = require("cors");
 const admin            = require("firebase-admin");
@@ -9,6 +10,7 @@ admin.initializeApp();
 const anthropicKey        = defineSecret("ANTHROPIC_API_KEY");
 const stripeSecretKey     = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
+const vapidPrivateKey     = defineSecret("VAPID_PRIVATE_KEY");
 
 const app = express();
 app.use(cors({ origin: true }));
@@ -215,4 +217,42 @@ app.post("/api/leadership", express.json(), async (req, res) => {
 exports.api = onRequest(
   { secrets: [anthropicKey, stripeSecretKey, stripeWebhookSecret] },
   app
+);
+
+// ── Push notification on new prayer request ───────────────────────────────────
+exports.onNewPrayer = onDocumentCreated(
+  { document: "prayerRequests/{prayerId}", secrets: [vapidPrivateKey] },
+  async (event) => {
+    const webpush = require("web-push");
+    const prayer  = event.data?.data();
+    if (!prayer || prayer.active === false) return;
+
+    webpush.setVapidDetails(
+      "mailto:support@perfectlyflawed.app",
+      "BM1JS_k8Me_v-rdRzCZ819lc3Xwy5FCLzCes01DigNU-lBIueOMZpDCeNWFrPuzFG8eC2lPebxs-twDQaEcUqFo",
+      vapidPrivateKey.value()
+    );
+
+    const db   = admin.firestore();
+    const snap = await db.collection("pushSubscriptions").get();
+    if (snap.empty) return;
+
+    const payload = JSON.stringify({
+      title: "New Prayer Request 🙏",
+      body:  `${prayer.author || "Someone"} shared a prayer in ${prayer.group || "the community"}.`,
+      url:   "/",
+    });
+
+    const sends = snap.docs.map(doc => {
+      const sub = doc.data().subscription;
+      return webpush.sendNotification(sub, payload).catch(err => {
+        // Remove stale subscriptions (410 = expired, 404 = not found)
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          return doc.ref.delete();
+        }
+      });
+    });
+
+    await Promise.allSettled(sends);
+  }
 );

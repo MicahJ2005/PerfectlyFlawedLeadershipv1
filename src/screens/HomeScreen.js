@@ -52,7 +52,7 @@ export function HomeScreen({ user, setTab, onTopicSelect }) {
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
         {[
           { label:"Today's Devotion",   sub:"Built for you",             icon:"📖", tab:1, gold:true  },
-          { label:"Leadership Advisor", sub:"Scripture-grounded advice", icon:"🧭", tab:2, gold:false },
+          { label:"Leader's Compass",   sub:"Scripture-grounded advice", icon:"🧭", tab:2, gold:false },
           { label:"Prayer Wall",        sub:"Community requests",        icon:"🙏", tab:3, gold:false },
           { label:"Your Profile",       sub:"Stats & saved content",     icon:"✨", tab:4, gold:false },
         ].map(({ label, sub, icon, tab, gold }) => (

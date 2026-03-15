@@ -146,7 +146,7 @@ function GroupPrayerWall({ group, user, onBack }) {
               style={{ ...css.input, resize:"none", lineHeight:1.7, height:100, marginBottom:14 }} />
             <label style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer", marginBottom:20 }}>
               <input type="checkbox" checked={isAnon} onChange={e => setIsAnon(e.target.checked)} style={{ width:18, height:18, accentColor:GOLD }} />
-              <span style={{ fontFamily:"Georgia,serif", fontSize:13, color:MIDGREY }}>Post anonymously</span>
+              <span style={{ fontFamily:"Georgia,serif", fontSize:13, color:MIDGREY }}>Post anonymously (displayed for 10 days)</span>
             </label>
             <GoldButton onClick={submitPrayer} disabled={!text.trim()}>Submit Prayer Request</GoldButton>
           </div>

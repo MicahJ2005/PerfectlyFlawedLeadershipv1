@@ -70,10 +70,10 @@ export const DB = {
     const snap = await getDocs(q);
     return snap.size;
   },
-  async togglePrayed(prayerId, uid, hasPrayed) {
+  async prayFor(prayerId, uid) {
     await updateDoc(doc(db, "prayerRequests", prayerId), {
-      prayedBy: hasPrayed ? arrayRemove(uid) : arrayUnion(uid),
-      hearts:   increment(hasPrayed ? -1 : 1),
+      prayedBy: arrayUnion(uid),
+      hearts:   increment(1),
     });
   },
 
@@ -104,6 +104,20 @@ export const DB = {
     const q    = query(collection(db, "users", uid, "leadershipSessions"), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  // Push subscriptions
+  async savePushSubscription(uid, subscription) {
+    await setDoc(doc(db, "pushSubscriptions", uid), { uid, subscription, updatedAt: serverTimestamp() });
+  },
+  async removePushSubscription(uid) {
+    const { deleteDoc: del } = await import("firebase/firestore");
+    await del(doc(db, "pushSubscriptions", uid));
+  },
+  async hasPushSubscription(uid) {
+    const { getDoc } = await import("firebase/firestore");
+    const snap = await getDoc(doc(db, "pushSubscriptions", uid));
+    return snap.exists();
   },
 
   // Verse of the Day
@@ -169,10 +183,10 @@ export const DB = {
       prayedBy:  [],
     });
   },
-  async togglePrivateGroupPrayed(groupId, prayerId, uid, hasPrayed) {
+  async prayForPrivateGroup(groupId, prayerId, uid) {
     await updateDoc(doc(db, "privateGroups", groupId, "prayers", prayerId), {
-      prayedBy: hasPrayed ? arrayRemove(uid) : arrayUnion(uid),
-      hearts:   increment(hasPrayed ? -1 : 1),
+      prayedBy: arrayUnion(uid),
+      hearts:   increment(1),
     });
   },
   async deactivatePrivateGroupPrayer(groupId, prayerId) {

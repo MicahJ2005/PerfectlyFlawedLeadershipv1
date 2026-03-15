@@ -7,12 +7,23 @@ import { SavedDevotionsScreen }       from "./SavedDevotionsScreen";
 import { AppSettingsScreen }          from "./AppSettingsScreen";
 import { PrivatePrayerGroupsScreen }  from "./PrivatePrayerGroupsScreen";
 
-export function ProfileScreen({ user, onLogout }) {
+const VAPID_PUBLIC_KEY = "BM1JS_k8Me_v-rdRzCZ819lc3Xwy5FCLzCes01DigNU-lBIueOMZpDCeNWFrPuzFG8eC2lPebxs-twDQaEcUqFo";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw     = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+export function ProfileScreen({ user, onLogout, setTab }) {
   const { darkMode } = useTheme();
-  const [stats,        setStats]        = useState({ devotions:0, sessions:0, prayed:0 });
-  const [subStatus,    setSubStatus]    = useState(null);
-  const [portalLoading,setPortalLoading]= useState(false);
-  const [subScreen,    setSubScreen]    = useState(null); // null | "groups" | "devotions" | "settings"
+  const [stats,          setStats]          = useState({ devotions:0, sessions:0, prayed:0 });
+  const [subStatus,      setSubStatus]      = useState(null);
+  const [portalLoading,  setPortalLoading]  = useState(false);
+  const [subScreen,      setSubScreen]      = useState(null);
+  const [notifEnabled,   setNotifEnabled]   = useState(false);
+  const [notifLoading,   setNotifLoading]   = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -20,8 +31,34 @@ export function ProfileScreen({ user, onLogout }) {
       .then(([devs, sessions, prayed]) => setStats({ devotions:devs.length, sessions:sessions.length, prayed }))
       .catch(() => {});
     const unsub = DB.subscribeToUser(user.uid, data => setSubStatus(data.subscriptionStatus || null));
+    DB.hasPushSubscription(user.uid).then(setNotifEnabled);
     return () => unsub();
   }, [user]);
+
+  const toggleNotifications = async () => {
+    if (notifLoading) return;
+    setNotifLoading(true);
+    try {
+      if (notifEnabled) {
+        await DB.removePushSubscription(user.uid);
+        setNotifEnabled(false);
+      } else {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") { alert("Please allow notifications in your browser settings."); return; }
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+        await DB.savePushSubscription(user.uid, sub.toJSON());
+        setNotifEnabled(true);
+      }
+    } catch (e) {
+      alert("Could not update notification settings: " + e.message);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
 
   const openPortal = async () => {
     setPortalLoading(true);
@@ -51,7 +88,7 @@ export function ProfileScreen({ user, onLogout }) {
   const initial  = (user?.displayName || user?.email || "?")[0].toUpperCase();
 
   const rows = [
-    { icon:"🔔", title:"Notifications",       sub:"Daily devotion reminders",       onPress: null                                  },
+    { icon:"🔔", title:"Notifications",       sub: notifLoading ? "Updating…" : notifEnabled ? "Tap to disable" : "Get notified of new prayers", onPress: toggleNotifications, badge: notifEnabled ? "On" : null },
     { icon:"🙏", title:"My Prayer Groups",   sub:"Manage group memberships",        onPress: () => setSubScreen("groups")          },
     { icon:"🔒", title:"Private Groups",     sub:"Create or join with a code",      onPress: () => setSubScreen("privateGroups")   },
     { icon:"📖", title:"Saved Devotions",    sub:"View your saved library",         onPress: () => setSubScreen("devotions")       },
@@ -76,8 +113,12 @@ export function ProfileScreen({ user, onLogout }) {
 
       {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:18 }}>
-        {[["🙏",stats.prayed,"Prayers"],["📖",stats.devotions,"Devotions"],["🧭",stats.sessions,"Sessions"]].map(([icon, n, label]) => (
-          <div key={label} style={{ background:"rgba(255,255,255,0.7)", borderRadius:14, padding:"14px 10px", textAlign:"center", border:"1px solid rgba(196,146,42,0.15)" }}>
+        {[
+          ["🙏", stats.prayed,    "Prayers",   () => setTab(3)],
+          ["📖", stats.devotions, "Devotions",  () => setSubScreen("devotions")],
+          ["🧭", stats.sessions,  "Sessions",   () => setTab(2)],
+        ].map(([icon, n, label, onPress]) => (
+          <div key={label} onClick={onPress} style={{ background:"rgba(255,255,255,0.7)", borderRadius:14, padding:"14px 10px", textAlign:"center", border:"1px solid rgba(196,146,42,0.15)", cursor:"pointer" }}>
             <p style={{ fontSize:18, margin:"0 0 4px" }}>{icon}</p>
             <p style={{ fontFamily:"Georgia,serif", fontSize:22, fontWeight:700, color:GOLD, margin:"0 0 3px" }}>{n}</p>
             <p style={{ fontFamily:"Georgia,serif", fontSize:10, color:MIDGREY, margin:0 }}>{label}</p>
@@ -111,7 +152,7 @@ export function ProfileScreen({ user, onLogout }) {
       )}
 
       {/* Settings rows */}
-      {rows.map(({ icon, title, sub, onPress }) => (
+      {rows.map(({ icon, title, sub, onPress, badge }) => (
         <div
           key={title}
           onClick={onPress || undefined}
@@ -122,6 +163,7 @@ export function ProfileScreen({ user, onLogout }) {
             <p style={{ fontFamily:"Georgia,serif", fontSize:14, fontWeight:600, color:CHARCOAL, margin:0 }}>{title}</p>
             <p style={{ fontFamily:"Georgia,serif", fontSize:11, color:LTGREY, margin:0 }}>{sub}</p>
           </div>
+          {badge && <span style={{ background:"rgba(196,146,42,0.15)", color:GOLD, fontFamily:"Georgia,serif", fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:10 }}>{badge}</span>}
           {onPress && <span style={{ color:LTGREY, fontSize:16 }}>›</span>}
         </div>
       ))}

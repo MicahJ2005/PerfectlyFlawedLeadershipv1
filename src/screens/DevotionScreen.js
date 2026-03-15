@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
 import { DB } from "../config/firebase";
-import { CHARCOAL, GOLD, WHITE } from "../constants/colors";
+import { CHARCOAL, GOLD, LTGREY, MIDGREY, WHITE } from "../constants/colors";
 import { css } from "../constants/styles";
 import { TOPICS } from "../constants/data";
 import { CompassIcon, CrossIcon } from "../components/icons";
 import { GoldButton, LoadingState, Divider } from "../components/ui";
+import { SavedDevotionsScreen, DevotionDetail } from "./SavedDevotionsScreen";
 
 export function DevotionScreen({ user, pendingTopic, onTopicConsumed }) {
-  const [topic,   setTopic]   = useState("");
-  const [devotion,setDevotion]= useState(null);
-  const [loading, setLoading] = useState(false);
-  const [saved,   setSaved]   = useState(false);
-  const [error,   setError]   = useState(null);
+  const [topic,          setTopic]          = useState("");
+  const [devotion,       setDevotion]       = useState(null);
+  const [loading,        setLoading]        = useState(false);
+  const [saved,          setSaved]          = useState(false);
+  const [error,          setError]          = useState(null);
+  const [recentDevotions,  setRecentDevotions]  = useState([]);
+  const [showHistory,      setShowHistory]      = useState(false);
+  const [selectedDevotion, setSelectedDevotion] = useState(null);
 
   useEffect(() => {
     if (pendingTopic) {
@@ -19,6 +23,11 @@ export function DevotionScreen({ user, pendingTopic, onTopicConsumed }) {
       onTopicConsumed?.();
     }
   }, [pendingTopic]);
+
+  useEffect(() => {
+    if (!user) return;
+    DB.getSavedDevotions(user.uid).then(all => setRecentDevotions(all.slice(0, 5)));
+  }, [user]);
 
   const generate = async (forceTopic) => {
     const t = forceTopic || topic || TOPICS[Math.floor(Math.random() * TOPICS.length)];
@@ -59,6 +68,18 @@ export function DevotionScreen({ user, pendingTopic, onTopicConsumed }) {
     } catch { /* silent — already marked saved in UI */ }
   };
 
+  if (selectedDevotion) {
+    return <DevotionDetail devotion={selectedDevotion} onBack={() => setSelectedDevotion(null)} />;
+  }
+  if (showHistory) {
+    return <SavedDevotionsScreen user={user} onBack={() => setShowHistory(false)} />;
+  }
+
+  const formatDate = (ts) => {
+    if (!ts?.toDate) return "";
+    return ts.toDate().toLocaleDateString("en-US", { month:"short", day:"numeric" });
+  };
+
   return (
     <div style={{ padding:"0 20px 100px", overflowY:"auto", height:"100%" }}>
       <div style={{ textAlign:"center", padding:"32px 0 24px" }}>
@@ -81,6 +102,27 @@ export function DevotionScreen({ user, pendingTopic, onTopicConsumed }) {
         <Divider />
         <GoldButton outline onClick={() => generate(TOPICS[Math.floor(Math.random()*TOPICS.length)])} disabled={loading}>✦  Surprise Me</GoldButton>
       </div>
+
+      {/* Recent devotions */}
+      {recentDevotions.length > 0 && !devotion && !loading && (
+        <div style={{ marginBottom:20 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+            <p style={{ fontFamily:"Georgia,serif", fontSize:13, fontWeight:600, color:CHARCOAL, margin:0 }}>Recent Devotions</p>
+            <button onClick={() => setShowHistory(true)} style={{ background:"none", border:"none", fontFamily:"Georgia,serif", fontSize:12, color:GOLD, cursor:"pointer", padding:0, fontWeight:600 }}>View all ›</button>
+          </div>
+          {recentDevotions.map(d => (
+            <div key={d.id} onClick={() => setSelectedDevotion(d)}
+              style={{ background:"rgba(255,255,255,0.75)", borderRadius:12, padding:"12px 14px", marginBottom:8, border:"1px solid rgba(196,146,42,0.15)", cursor:"pointer", display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <p style={{ fontFamily:"Georgia,serif", fontSize:13, fontWeight:700, color:CHARCOAL, margin:"0 0 2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{d.title}</p>
+                <p style={{ fontFamily:"Georgia,serif", fontSize:11, color:GOLD, margin:"0 0 2px" }}>{d.scripture?.reference}</p>
+                <p style={{ fontFamily:"Georgia,serif", fontSize:10, color:LTGREY, margin:0 }}>{d.topic} · {formatDate(d.savedAt)}</p>
+              </div>
+              <span style={{ color:MIDGREY, fontSize:16, flexShrink:0 }}>›</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {loading && <LoadingState msg="Preparing your devotion…" />}
       {error   && <div style={{ background:"#FFF0F0", border:"1px solid #F5C5C5", borderRadius:12, padding:16, textAlign:"center" }}><p style={{ fontFamily:"Georgia,serif", fontSize:13, color:"#C05050", margin:0 }}>{error}</p></div>}

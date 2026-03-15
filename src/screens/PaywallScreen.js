@@ -98,7 +98,7 @@ export function PaywallScreen({ user, featureName }) {
       <div style={{ background:"rgba(196,146,42,0.07)", borderRadius:16, padding:"18px 20px", marginBottom:20 }}>
         {[
           { Icon:BookIcon,     label:"Daily Devotion",        desc:"AI-generated devotions on any topic" },
-          { Icon:AdvisorIcon,  label:"Leadership Advisor",    desc:"Scripture-grounded situational guidance" },
+          { Icon:AdvisorIcon,  label:"Leader's Compass",      desc:"Scripture-grounded situational guidance" },
           { Icon:CompassIcon,  label:"Save & History",        desc:"Save devotions, revisit past sessions" },
         ].map(({ Icon, label, desc }) => (
           <div key={label} style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14, lastChild:{ marginBottom:0 } }}>
